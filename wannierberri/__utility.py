@@ -311,3 +311,43 @@ def Gaussian(x, width, adpt_smr):
         # width is number
         output[inds] = 1.0 / (np.sqrt(np.pi) * width) * np.exp(-(x[inds] / width)**2)
     return output
+
+def window_nd(a, window, steps = None, axis = None, gen_data = False):
+    
+    """ Took from https://stackoverflow.com/questions/45960192/using-numpy-as-strided-function-to-create-patches-tiles-rolling-or-sliding-w/45960193#45960193
+        used for making arrays smaller """
+
+    ashp = np.array(a.shape)
+    
+    if axis != None:
+        axs = np.array(axis, ndmin = 1)
+        assert np.all(np.in1d(axs, np.arange(ashp.size))), "Axes out of range"
+    else:
+        axs = np.arange(ashp.size)
+        
+    window = np.array(window, ndmin = 1)
+    assert (window.size == axs.size) | (window.size == 1), "Window dims and axes don't match"
+    wshp = ashp.copy()
+    wshp[axs] = window
+    assert np.all(wshp <= ashp), "Window is bigger than input array in axes"
+    
+    stp = np.ones_like(ashp)
+    if steps:
+        steps = np.array(steps, ndmin = 1)
+        assert np.all(steps > 0), "Only positive steps allowed"
+        assert (steps.size == axs.size) | (steps.size == 1), "Steps and axes don't match"
+        stp[axs] = steps
+
+    astr = np.array(a.strides)
+    
+    shape = tuple((ashp - wshp) // stp + 1) + tuple(wshp)
+    strides = tuple(astr * stp) + tuple(astr)
+    
+    as_strided = np.lib.stride_tricks.as_strided
+    a_view = np.squeeze(as_strided(a, 
+                                    shape = shape, 
+                                    strides = strides))
+    if gen_data :
+        return a_view, shape[:-wshp.size]
+    else:
+        return a_view

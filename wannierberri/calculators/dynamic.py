@@ -1,6 +1,6 @@
 import numpy as np
 import abc, functools
-from wannierberri.__utility import Gaussian, Lorentzian
+from wannierberri.__utility import Gaussian, Lorentzian, window_nd
 from wannierberri.result import EnergyResult
 from . import Calculator
 from wannierberri.formula.covariant import SpinVelocity
@@ -76,8 +76,12 @@ class DynamicCalculator(Calculator, abc.ABC):
                 [formula.trace_ln(ik, np.arange(*pair[0]), np.arange(*pair[1])) for pair in degen_group_pairs])
             factor_Efermi = np.array([self.factor_Efermi(pair[2], pair[3]) for pair in degen_group_pairs])
             factor_omega = np.array([self.factor_omega(pair[2], pair[3]) for pair in degen_group_pairs]).T
-            restot += factor_omega @ (factor_Efermi[:, :, None]
-                                      * matrix_elements.reshape(npair, -1)[:, None, :]).reshape(npair, -1)
+            
+            # This can lead to numpy memory error 
+            restot += window_nd(factor_omega @ (factor_Efermi[:, :, None]
+                                      * matrix_elements.reshape(npair, -1)[:, None, :]).reshape(npair, -1),1,axis=0)
+
+
         restot = restot.reshape(restot_shape).swapaxes(0, 1)  # swap the axes to get EF,omega,a,b,...
         restot[:] *= self.final_factor / (data_K.nk * data_K.cell_volume)
         return EnergyResult(
