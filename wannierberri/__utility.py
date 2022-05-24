@@ -221,7 +221,7 @@ class FFT_R_to_k():
         if self.lib == 'slow':
             t0 = time()
             k = np.zeros(3, dtype=int)
-            AAA_K = np.array(
+            AAA_K = window_nd(np.array(
                 [
                     [
                         [
@@ -230,23 +230,23 @@ class FFT_R_to_k():
                                 for R, A in zip(self.iRvec, AAA_R)) for k[2] in range(self.NKFFT[2])
                         ] for k[1] in range(self.NKFFT[1])
                     ] for k[0] in range(self.NKFFT[0])
-                ])
+                ]),1,axis=0)
         else:
             t0 = time()
             assert self.nRvec == shapeA[0]
             assert self.num_wann == shapeA[1] == shapeA[2]
-            AAA_K = np.zeros(self.NKFFT + shapeA[1:], dtype=complex)
+            AAA_K = window_nd(np.zeros(self.NKFFT + shapeA[1:], dtype=complex),1,axis=0)
             # TODO : place AAA_R to FFT grid from beginning, even before multiplying by exp(dkR)
             for ir, irvec in enumerate(self.iRvec):
                 AAA_K[tuple(irvec)] += AAA_R[ir]
             self.transform(AAA_K)
-            AAA_K *= np.prod(self.NKFFT)
+            AAA_K *= window_nd(np.prod(self.NKFFT),1,axis=0)
 
         # TODO - think if fft transform of half of matrix makes sense
         if hermitean:
-            AAA_K = 0.5 * (AAA_K + AAA_K.transpose((0, 1, 2, 4, 3) + tuple(range(5, AAA_K.ndim))).conj())
+            AAA_K = window_nd(0.5 * (AAA_K + AAA_K.transpose((0, 1, 2, 4, 3) + tuple(range(5, AAA_K.ndim))).conj()),1,axis=0)
         elif antihermitean:
-            AAA_K = 0.5 * (AAA_K - AAA_K.transpose((0, 1, 2, 4, 3) + tuple(range(5, AAA_K.ndim))).conj())
+            AAA_K = window_nd(0.5 * (AAA_K - AAA_K.transpose((0, 1, 2, 4, 3) + tuple(range(5, AAA_K.ndim))).conj()),1,axis=0)
 
         if reshapeKline:
             AAA_K = AAA_K.reshape((np.prod(self.NKFFT), ) + shapeA[1:])
