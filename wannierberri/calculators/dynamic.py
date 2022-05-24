@@ -173,7 +173,7 @@ class Formula_OptCond():
 
     def __init__(self, data_K):
         A = data_K.A_H
-        self.AA = 1j * A[:, :, :, :, None] * A.swapaxes(1, 2)[:, :, :, None, :]
+        self.AA = window_nd(1,j * A[:, :, :, :, None] * A.swapaxes(1, 2)[:, :, :, None, :],axis=0)
         self.ndim = 2
         self.TRodd = False
         self.Iodd = False
