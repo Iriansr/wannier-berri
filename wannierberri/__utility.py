@@ -240,7 +240,7 @@ class FFT_R_to_k():
             for ir, irvec in enumerate(self.iRvec):
                 AAA_K[tuple(irvec)] += AAA_R[ir]
             self.transform(AAA_K)
-            AAA_K *= window_nd(np.prod(self.NKFFT),1,axis=0)
+            AAA_K *= np.prod(self.NKFFT)
 
         # TODO - think if fft transform of half of matrix makes sense
         if hermitean:
