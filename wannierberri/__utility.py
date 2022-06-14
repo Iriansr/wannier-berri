@@ -190,7 +190,7 @@ class FFT_R_to_k():
 
     def transform(self, AAA_K):
         if self.lib == 'numpy':
-            AAA_K[...] = np.fft.ifftn(AAA_K, axes=(0, 1, 2))
+            AAA_K[...] = window_nd(np.fft.ifftn(AAA_K, axes=(0, 1, 2)),1,axis=0)
         elif self.lib == 'fftw':
             # do recursion if array has cartesian indices. The recursion should not be very deep
             if AAA_K.ndim > 5:
@@ -198,7 +198,7 @@ class FFT_R_to_k():
                     AAA_K[..., i] = self.transform(AAA_K[..., i])
             else:
                 AAA_K[...] = self.execute_fft(AAA_K[...])
-            return AAA_K
+            return window_nd(AAA_K,1,axis=0)
         elif self.lib == 'slow':
             raise RuntimeError("FFT.transform should not be called for slow FT")
         else:
@@ -216,7 +216,7 @@ class FFT_R_to_k():
         # AAA_R is an array of dimension (  num_wann x num_wann x nRpts X... ) (any further dimensions allowed)
         if hermitean and antihermitean:
             raise ValueError("A matrix cannot be both hermitean and anti-hermitean, unless it is zero")
-        AAA_R = AAA_R.transpose((2, 0, 1) + tuple(range(3, AAA_R.ndim)))
+        AAA_R = window_nd(AAA_R.transpose((2, 0, 1) + tuple(range(3, AAA_R.ndim))),1,axis=0)
         shapeA = AAA_R.shape
         if self.lib == 'slow':
             t0 = time()
